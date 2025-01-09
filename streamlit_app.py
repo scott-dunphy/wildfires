@@ -137,6 +137,25 @@ if st.button("Check Zones"):
         # Convert results to a DataFrame
         df = pd.DataFrame(results)
 
-        # Display the DataFrame
+        # Add a column with red dots or apply custom styles
+        def add_red_dot(row):
+            if row["Evacuation Zone"] == "Yes":
+                return "🔴"
+            return ""
+        
+        # Add red dot column
+        df["Status"] = df.apply(add_red_dot, axis=1)
+        
+        # Streamlit Styling with Conditional Formatting
+        def highlight_evacuation_zone(val):
+            if val == "Yes":
+                return "color: red; font-weight: bold;"
+            return ""
+        
+        # Apply styles
+        styled_df = df.style.applymap(highlight_evacuation_zone, subset=["Evacuation Zone"])
+        
+        # Display with red dots and styled text
+        st.dataframe(df)  # For plain DataFrame
         st.write("Results:")
-        st.dataframe(df)
+        st.dataframe(styled_df, use_container_width=True)
