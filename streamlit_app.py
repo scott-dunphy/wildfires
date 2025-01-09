@@ -68,6 +68,8 @@ st.write("Enter a list of addresses (one per line) to check their evacuation zon
 # Input addresses
 address_input = st.text_area("Addresses", placeholder="Enter addresses here, one per line...")
 addresses = address_input.strip().split("\n")
+st.write("Evacuation Zone Source: NY Times")
+st.write("Geocoding Source: OpenStreetMap")
 
 if st.button("Check Zones"):
     if not addresses or addresses == [""]:
@@ -174,6 +176,5 @@ if st.button("Check Zones"):
         # Display with red dots and styled text
         st.write("Results:")
         st.dataframe(styled_df, use_container_width=True)
-        st.write("Evacuation Zone Source: NY Times")
-        st.write("Geocoding Source: OpenStreetMap")
+
 
