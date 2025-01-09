@@ -145,8 +145,7 @@ if st.button("Check Zones"):
                     "Last Updated (EST)": None
                 })
 
-        st.write("Evacuation Zone Source: NY Times")
-        st.write("Geocoding Source: OpenStreetMap")
+
         # Convert results to a DataFrame
         df = pd.DataFrame(results)
 
@@ -177,5 +176,9 @@ if st.button("Check Zones"):
         # Display with red dots and styled text
         st.write("Results:")
         st.dataframe(styled_df, use_container_width=True)
+
+st.write("Evacuation Zone Source: NY Times")
+st.write("Geocoding Source: OpenStreetMap")
+
 
 
