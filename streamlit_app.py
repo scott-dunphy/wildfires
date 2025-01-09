@@ -107,10 +107,10 @@ if st.button("Check Zones"):
 
             if matching_zones:
                 zone = matching_zones[0]
-                last_updated = datetime.fromtimestamp(zone["last_updated"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                last_updated = datetime.fromtimestamp(zone["last_updated"] / 1000).strftime("%Y-%m-%d %H:%M:%S") if zone.get("last_updated") else None
                 results.append({
                     "Address": address,
-                    "Evacuation Zone": "Yes",
+                    "Evacuation Zone": "Yes" if zone.get("zone_status") == "Evacuation Order" else "No",
                     "Evacuation Warning": "Yes" if zone.get("zone_status") == "Evacuation Warning" else "No",
                     "Distance to Closest Evacuation Zone (miles)": None,
                     "Distance to Closest Warning Zone (miles)": None,
@@ -160,8 +160,16 @@ if st.button("Check Zones"):
                 return "color: red; font-weight: bold;"
             return ""
         
+        def highlight_evacuation_warning(val):
+          if val == "Yes":
+            return "color: red; font-weight: bold;"
+          return ""
+
+        
         # Apply styles
         styled_df = df.style.applymap(highlight_evacuation_zone, subset=["Evacuation Zone"])
+        styled_df = styled_df.applymap(highlight_evacuation_warning, subset=["Evacuation Warning"])
+
         
         # Display with red dots and styled text
         st.write("Results:")
