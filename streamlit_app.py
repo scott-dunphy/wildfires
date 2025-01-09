@@ -62,7 +62,7 @@ def locate_property(address):
     return location
 
 # Streamlit App
-st.title("Evacuation Zone Finder")
+st.title("SoCal Wildfire Evacuation/Warning Zone Finder")
 st.write("Enter a list of addresses (one per line) to check their evacuation zone status.")
 
 # Input addresses
