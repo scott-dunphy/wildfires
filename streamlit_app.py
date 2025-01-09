@@ -145,6 +145,9 @@ if st.button("Check Zones"):
         
         # Add red dot column
         df["Status"] = df.apply(add_red_dot, axis=1)
+        columns_order = ["Status", "Address", "Evacuation Zone", "Evacuation Warning", "Distance to Closest Zone (miles)"]
+        df = df[columns_order]
+
         
         # Streamlit Styling with Conditional Formatting
         def highlight_evacuation_zone(val):
