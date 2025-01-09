@@ -20,15 +20,15 @@ def haversine(lat1, lon1, lat2, lon2):
 
 # Find evacuation zones or closest distance
 def find_evacuation_zones(lat, lon, geojson_data):
-    point = Point(lon, lat)  # Note: GeoJSON uses (longitude, latitude)
-    matching_zones = []  # To store all zones that contain the point
+    point = Point(lon, lat)
+    matching_zones = []
     closest_distance = float('inf')
     closest_zone = None
     closest_warning_distance = float('inf')
     closest_warning_zone = None
 
     for feature in geojson_data["features"]:
-        polygon = shape(feature["geometry"])  # Convert geometry to a shapely polygon
+        polygon = shape(feature["geometry"])
         zone_status = feature["properties"].get("zone_status", "")
         if polygon.contains(point):
             matching_zones.append(feature["properties"])
@@ -41,6 +41,16 @@ def find_evacuation_zones(lat, lon, geojson_data):
             if zone_status == "Evacuation Warning" and distance < closest_warning_distance:
                 closest_warning_distance = distance
                 closest_warning_zone = feature["properties"]
+
+    if closest_zone:
+        closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
+        closest_lat, closest_lon = closest_point.y, closest_point.x
+        closest_distance = haversine(lat, lon, closest_lat, closest_lon)
+    if closest_warning_zone:
+        closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
+        closest_lat, closest_lon = closest_point.y, closest_point.x
+        closest_warning_distance = haversine(lat, lon, closest_lat, closest_lon)
+
 
     return matching_zones, closest_distance, closest_zone, closest_warning_distance, closest_warning_zone
 
