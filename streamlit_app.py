@@ -77,8 +77,8 @@ if st.button("Check Zones"):
                     "Address": address,
                     "Evacuation Zone": "No",
                     "Evacuation Warning": "No",
-                    "Distance to Closest Zone (miles)": "N/A",
-                    "Distance to Closest Warning (miles)": "N/A",
+                    "Distance to Closest Evacuation Zone (miles)": "N/A",
+                    "Distance to Closest Warning Zone (miles)": "N/A",
                     "Zone ID": None,
                     "Zone Status": None,
                     "Zone Status Reason": None,
@@ -102,8 +102,8 @@ if st.button("Check Zones"):
                     "Address": address,
                     "Evacuation Zone": "Yes",
                     "Evacuation Warning": "Yes" if zone.get("zone_status") == "Evacuation Warning" else "No",
-                    "Distance to Closest Zone (miles)": None,
-                    "Distance to Closest Warning (miles)": None,
+                    "Distance to Closest Evacuation Zone (miles)": None,
+                    "Distance to Closest Warning Zone (miles)": None,
                     "Zone ID": zone.get("zone_id"),
                     "Zone Status": zone.get("zone_status"),
                     "Zone Status Reason": zone.get("zone_status_reason"),
@@ -120,8 +120,8 @@ if st.button("Check Zones"):
                     "Address": address,
                     "Evacuation Zone": "No",
                     "Evacuation Warning": "No",
-                    "Distance to Closest Zone (miles)": f"{closest_distance:.2f}",
-                    "Distance to Closest Warning (miles)": f"{closest_warning_distance:.2f}" if closest_warning_zone else "N/A",
+                    "Distance to Closest Evacuation Zone (miles)": f"{closest_distance:.2f}",
+                    "Distance to Closest Warning Zone (miles)": f"{closest_warning_distance:.2f}" if closest_warning_zone else "N/A",
                     "Zone ID": None,
                     "Zone Status": None,
                     "Zone Status Reason": None,
@@ -142,11 +142,6 @@ if st.button("Check Zones"):
             if row["Evacuation Zone"] == "Yes":
                 return "🔴"
             return ""
-        
-        # Add red dot column
-        df["Status"] = df.apply(add_red_dot, axis=1)
-        columns_order = ["Status", "Address", "Evacuation Zone", "Evacuation Warning", "Distance to Closest Zone (miles)"]
-        df = df[columns_order]
 
         
         # Streamlit Styling with Conditional Formatting
