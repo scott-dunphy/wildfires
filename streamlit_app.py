@@ -159,6 +159,5 @@ if st.button("Check Zones"):
         styled_df = df.style.applymap(highlight_evacuation_zone, subset=["Evacuation Zone"])
         
         # Display with red dots and styled text
-        st.dataframe(df)  # For plain DataFrame
         st.write("Results:")
         st.dataframe(styled_df, use_container_width=True)
