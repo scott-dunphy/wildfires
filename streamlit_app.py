@@ -8,7 +8,11 @@ from geopy.geocoders import Nominatim
 from datetime import datetime
 import pandas as pd
 
-# Haversine formula to calculate distance in miles between two points
+from math import radians, sin, cos, sqrt, atan2
+from shapely.geometry import Point, shape
+from shapely.ops import transform
+import pyproj
+
 def haversine(lat1, lon1, lat2, lon2):
     R = 3958.8  # Radius of Earth in miles
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])  # Convert to radians
@@ -27,25 +31,35 @@ def find_evacuation_zones(lat, lon, geojson_data):
     closest_warning_distance = float('inf')
     closest_warning_zone = None
 
+    # Define a projection for the shapely operation
+    project_wgs_to_meters = pyproj.Transformer.from_crs(4326, 3857, always_xy=True).transform
+
     for feature in geojson_data["features"]:
         polygon = shape(feature["geometry"])
         zone_status = feature["properties"].get("zone_status", "")
+        
+        # Project polygon to a meter based projection for distance calculation
+        polygon_meters = transform(project_wgs_to_meters, polygon)
+        point_meters = transform(project_wgs_to_meters, point)
+        
         if polygon.contains(point):
             matching_zones.append(feature["properties"])
         else:
-            # Calculate distance to the closest point on the polygon
-            distance = polygon.exterior.distance(point)
-            if distance < closest_distance:
-                closest_distance = distance
+            # Calculate distance to the closest point on the polygon using meters
+            distance_meters = polygon_meters.exterior.distance(point_meters)
+           
+            if distance_meters < closest_distance:
+                closest_distance = distance_meters
                 closest_zone = feature["properties"]
-            if zone_status == "Evacuation Warning" and distance < closest_warning_distance:
-                closest_warning_distance = distance
+            if zone_status == "Evacuation Warning" and distance_meters < closest_warning_distance:
+                closest_warning_distance = distance_meters
                 closest_warning_zone = feature["properties"]
 
     if closest_zone:
         closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
         closest_lat, closest_lon = closest_point.y, closest_point.x
         closest_distance = haversine(lat, lon, closest_lat, closest_lon)
+
     if closest_warning_zone:
         closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
         closest_lat, closest_lon = closest_point.y, closest_point.x
