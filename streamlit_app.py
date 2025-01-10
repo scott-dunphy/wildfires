@@ -32,41 +32,48 @@ def find_evacuation_zones(lat, lon, geojson_data):
     closest_warning_distance = float('inf')
     closest_warning_zone = None
 
-    # Define a projection for the shapely operation
-    project_wgs_to_meters = pyproj.Transformer.from_crs(4326, 3857, always_xy=True).transform
+    # Create a local projection centered on the point of interest
+    local_azimuthal_projection = pyproj.Proj(
+        proj='aeqd',  # Azimuthal Equidistant projection
+        lat_0=lat,
+        lon_0=lon,
+        datum='WGS84'
+    )
+    wgs84 = pyproj.Proj('EPSG:4326')
+    project = pyproj.Transformer.from_proj(wgs84, local_azimuthal_projection, always_xy=True).transform
+
+    # Project the point
+    point_projected = transform(project, point)
 
     for feature in geojson_data["features"]:
-        polygon = shape(feature["geometry"])
-        zone_status = feature["properties"].get("zone_status", "")
-        
-        # Project polygon to meter-based projection for accurate distance calculation
-        polygon_meters = transform(project_wgs_to_meters, polygon)
-        point_meters = transform(project_wgs_to_meters, point)
-        
-        if polygon.contains(point):
-            matching_zones.append(feature["properties"])
-        else:
-            # Calculate distance in meters, then convert to miles
-            distance_meters = polygon_meters.exterior.distance(point_meters)
-            distance_miles = meters_to_miles(distance_meters)
-           
-            if distance_miles < closest_distance:
-                closest_distance = distance_miles
-                closest_zone = feature["properties"]
-            if zone_status == "Evacuation Warning" and distance_miles < closest_warning_distance:
-                closest_warning_distance = distance_miles
-                closest_warning_zone = feature["properties"]
+        try:
+            polygon = shape(feature["geometry"])
+            zone_status = feature["properties"].get("zone_status", "")
+            
+            # Project the polygon
+            polygon_projected = transform(project, polygon)
+            
+            if polygon.contains(point):
+                matching_zones.append(feature["properties"])
+            else:
+                # Calculate distance using haversine for more stability
+                boundary_points = list(polygon.exterior.coords)
+                min_distance = float('inf')
+                
+                for boundary_point in boundary_points:
+                    dist = haversine(lat, lon, boundary_point[1], boundary_point[0])
+                    min_distance = min(min_distance, dist)
+                
+                if min_distance < closest_distance:
+                    closest_distance = min_distance
+                    closest_zone = feature["properties"]
+                if zone_status == "Evacuation Warning" and min_distance < closest_warning_distance:
+                    closest_warning_distance = min_distance
+                    closest_warning_zone = feature["properties"]
 
-    # For verification, also calculate haversine distance to closest points
-    if closest_zone:
-        closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
-        closest_lat, closest_lon = closest_point.y, closest_point.x
-        closest_distance = haversine(lat, lon, closest_lat, closest_lon)
-
-    if closest_warning_zone:
-        closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
-        closest_lat, closest_lon = closest_point.y, closest_point.x
-        closest_warning_distance = haversine(lat, lon, closest_lat, closest_lon)
+        except (ValueError, AttributeError) as e:
+            # Skip invalid geometries
+            continue
 
     return matching_zones, closest_distance, closest_zone, closest_warning_distance, closest_warning_zone
 
@@ -90,7 +97,7 @@ if st.button("Check Zones"):
         st.warning("Please enter at least one address.")
     else:
         # Fetch the GeoJSON file
-        geojson_url = "https://static01.nyt.com/projects/weather/weather-bots/cal-fire-evacuations/by_date/jan_25_perimeters/20250109_2017.json"
+        geojson_url = "https://static01.nyt.com/projects/weather/weather-bots/cal-fire-evacuations/latest.json"
         response = requests.get(geojson_url)
         geojson_data = response.json()
 
