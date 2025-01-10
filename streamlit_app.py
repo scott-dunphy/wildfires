@@ -115,6 +115,8 @@ addresses = address_input.strip().split("\n")
 if st.button("Check Zones"):
     if not addresses or addresses == [""]:
         st.warning("Please enter at least one address.")
+    elif len(addresses) > 10:
+       st.warning("Please enter a maximum of 10 addresses.")
     else:
         # Fetch the GeoJSON file
         geojson_url = "https://static01.nyt.com/projects/weather/weather-bots/cal-fire-evacuations/latest.json"
