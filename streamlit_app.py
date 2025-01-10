@@ -106,7 +106,7 @@ def locate_property(address):
 
 # Streamlit App
 st.title("SoCal Wildfire Evacuation/Warning Zone Finder")
-st.write("Enter a list of addresses (one per line) to check their evacuation zone status.")
+st.write("Enter up to 10 addresses (one per line) to check their evacuation zone status.")
 
 # Input addresses
 address_input = st.text_area("Addresses", placeholder="Enter addresses here, one per line...")
