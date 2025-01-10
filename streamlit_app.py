@@ -79,7 +79,7 @@ def find_evacuation_zones(lat, lon, geojson_data):
 
 # Geocoding function
 def locate_property(address):
-    geolocator = Nominatim(user_agent="fires")
+    geolocator = Nominatim(user_agent="fire_watch")
     location = geolocator.geocode(address)
     time.sleep(1)
     return location
