@@ -12,6 +12,8 @@ import pyproj
 import googlemaps
 from collections import namedtuple
 
+Location = namedtuple("Location", ["latitude", "longitude"])
+
 def haversine(lat1, lon1, lat2, lon2):
     """Calculate distance between two points in miles using the haversine formula"""
     R = 3958.8  # Radius of Earth in miles
