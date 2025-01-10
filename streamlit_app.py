@@ -9,6 +9,8 @@ from datetime import datetime
 import pandas as pd
 from shapely.ops import transform
 import pyproj
+import googlemaps
+from collections import namedtuple
 
 def haversine(lat1, lon1, lat2, lon2):
     """Calculate distance between two points in miles using the haversine formula"""
@@ -79,10 +81,26 @@ def find_evacuation_zones(lat, lon, geojson_data):
 
 # Geocoding function
 def locate_property(address):
-    geolocator = Nominatim(user_agent="fire_watch")
-    location = geolocator.geocode(address)
-    time.sleep(1)
-    return location
+    api_key = st.secrets["GOOGLE_MAPS_API_KEY"]
+    if not api_key:
+        print("Error: GOOGLE_MAPS_API_KEY environment variable not set.")
+        return None
+
+    gmaps = googlemaps.Client(key=api_key)
+
+    try:
+        geocode_result = gmaps.geocode(address)
+        if geocode_result:
+            location = geocode_result[0]['geometry']['location']
+            latitude = location['lat']
+            longitude = location['lng']
+            return Location(latitude=latitude, longitude=longitude)
+        else:
+            print(f"Geocoding failed for address: {address}, no results found")
+            return None
+    except googlemaps.exceptions.ApiError as e:
+        print(f"Geocoding error for address: {address}. API Error: {e}")
+        return None
 
 # Streamlit App
 st.title("SoCal Wildfire Evacuation/Warning Zone Finder")
