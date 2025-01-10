@@ -97,7 +97,7 @@ if st.button("Check Zones"):
         st.warning("Please enter at least one address.")
     else:
         # Fetch the GeoJSON file
-        geojson_url = "https://static01.nyt.com/projects/weather/weather-bots/cal-fire-evacuations/latest.json"
+        geojson_url = "https://static01.nyt.com/projects/weather/weather-bots/cal-fire-evacuations/by_date/jan_25_perimeters/20250109_2017.json"
         response = requests.get(geojson_url)
         geojson_data = response.json()
 
