@@ -7,22 +7,23 @@ from math import radians, cos, sin, sqrt, atan2
 from geopy.geocoders import Nominatim
 from datetime import datetime
 import pandas as pd
-
-from math import radians, sin, cos, sqrt, atan2
-from shapely.geometry import Point, shape
 from shapely.ops import transform
 import pyproj
 
 def haversine(lat1, lon1, lat2, lon2):
+    """Calculate distance between two points in miles using the haversine formula"""
     R = 3958.8  # Radius of Earth in miles
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])  # Convert to radians
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
     a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     return R * c
 
-# Find evacuation zones or closest distance
+def meters_to_miles(meters):
+    """Convert meters to miles"""
+    return meters * 0.000621371
+
 def find_evacuation_zones(lat, lon, geojson_data):
     point = Point(lon, lat)
     matching_zones = []
@@ -38,23 +39,25 @@ def find_evacuation_zones(lat, lon, geojson_data):
         polygon = shape(feature["geometry"])
         zone_status = feature["properties"].get("zone_status", "")
         
-        # Project polygon to a meter based projection for distance calculation
+        # Project polygon to meter-based projection for accurate distance calculation
         polygon_meters = transform(project_wgs_to_meters, polygon)
         point_meters = transform(project_wgs_to_meters, point)
         
         if polygon.contains(point):
             matching_zones.append(feature["properties"])
         else:
-            # Calculate distance to the closest point on the polygon using meters
+            # Calculate distance in meters, then convert to miles
             distance_meters = polygon_meters.exterior.distance(point_meters)
+            distance_miles = meters_to_miles(distance_meters)
            
-            if distance_meters < closest_distance:
-                closest_distance = distance_meters
+            if distance_miles < closest_distance:
+                closest_distance = distance_miles
                 closest_zone = feature["properties"]
-            if zone_status == "Evacuation Warning" and distance_meters < closest_warning_distance:
-                closest_warning_distance = distance_meters
+            if zone_status == "Evacuation Warning" and distance_miles < closest_warning_distance:
+                closest_warning_distance = distance_miles
                 closest_warning_zone = feature["properties"]
 
+    # For verification, also calculate haversine distance to closest points
     if closest_zone:
         closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
         closest_lat, closest_lon = closest_point.y, closest_point.x
@@ -64,7 +67,6 @@ def find_evacuation_zones(lat, lon, geojson_data):
         closest_point = polygon.exterior.interpolate(polygon.exterior.project(point))
         closest_lat, closest_lon = closest_point.y, closest_point.x
         closest_warning_distance = haversine(lat, lon, closest_lat, closest_lon)
-
 
     return matching_zones, closest_distance, closest_zone, closest_warning_distance, closest_warning_zone
 
@@ -82,7 +84,6 @@ st.write("Enter a list of addresses (one per line) to check their evacuation zon
 # Input addresses
 address_input = st.text_area("Addresses", placeholder="Enter addresses here, one per line...")
 addresses = address_input.strip().split("\n")
-
 
 if st.button("Check Zones"):
     if not addresses or addresses == [""]:
@@ -156,16 +157,8 @@ if st.button("Check Zones"):
                     "Last Updated (EST)": None
                 })
 
-
         # Convert results to a DataFrame
         df = pd.DataFrame(results)
-
-        # Add a column with red dots or apply custom styles
-        def add_red_dot(row):
-            if row["Evacuation Zone"] == "Yes":
-                return "🔴"
-            return ""
-
         
         # Streamlit Styling with Conditional Formatting
         def highlight_evacuation_zone(val):
@@ -174,22 +167,17 @@ if st.button("Check Zones"):
             return ""
         
         def highlight_evacuation_warning(val):
-          if val == "Yes":
-            return "color: red; font-weight: bold;"
-          return ""
+            if val == "Yes":
+                return "color: red; font-weight: bold;"
+            return ""
 
-        
         # Apply styles
         styled_df = df.style.applymap(highlight_evacuation_zone, subset=["Evacuation Zone"])
         styled_df = styled_df.applymap(highlight_evacuation_warning, subset=["Evacuation Warning"])
 
-        
-        # Display with red dots and styled text
+        # Display with styled text
         st.write("Results:")
         st.dataframe(styled_df, use_container_width=True)
 
 st.write("Evacuation Zone Source: NY Times")
 st.write("Geocoding Source: OpenStreetMap")
-
-
-
