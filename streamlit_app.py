@@ -123,7 +123,7 @@ if st.button("Check Zones"):
 
         results = []
 
-        for address in addresses:
+        for address in addresses[:10]:
             location = locate_property(address)
             if not location:
                 results.append({
